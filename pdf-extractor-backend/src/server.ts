@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express'
 import cors from "cors"
 import pdfRoutes from "./routes/pdfRoutes.js"
@@ -9,8 +10,16 @@ import { PORT, API_ROUTES } from './static/api.js'
 connectDatabase();
 
 const app = express()
+const allowedOrigin = [
+  process.env.LOCALHOST,
+  process.env.LOCAL_HOST,
+  process.env.VERCEL_LINK
+].filter(Boolean) as string[]
 
-app.use(cors());
+app.use(cors({
+  origin: allowedOrigin,
+  credentials: true
+}));
 app.use(express.json());
 
 // Prevent browser caching for all API responses (secures back/forward navigation)
