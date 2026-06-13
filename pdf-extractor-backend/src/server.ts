@@ -43,11 +43,16 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 app.use(express.json());
 
+
 // Prevent browser caching for all API responses (secures back/forward navigation)
 app.use((req, res, next) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
+  next();
+});
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.originalUrl}`);
   next();
 });
 
