@@ -1,81 +1,57 @@
 import 'dotenv/config';
-import express from 'express'
-import cors from "cors"
-import pdfRoutes from "./routes/pdfRoutes.js"
-import authRoutes from "./routes/authRoutes.js"
-import { connectDatabase } from './config/mongodb.js'
-import { PORT, API_ROUTES } from './static/api.js'
+import express from 'express';
+import cors from 'cors';
+import pdfRoutes from './routes/pdfRoutes.js';
+import authRoutes from './routes/authRoutes.js';
+import { connectDatabase } from './config/mongodb.js';
+import { PORT } from './static/api.js';
 
-// Connect to MongoDB database
+// Connect to MongoDB
 connectDatabase();
 
-const app = express()
+const app = express();
 
-// Request logger - FIRST middleware so every request is logged
-app.use((req, res, next) => {
-  console.log(`--> ${req.method} ${req.originalUrl} from ${req.headers.origin}`);
-  next();
-});
-
-const allowedOrigins = [
-  process.env.LOCALHOST,
-  process.env.LOCAL_HOST,
-  process.env.VERCEL_LINK,
-]
-  .filter((o): o is string => typeof o === 'string' && o.trim() !== '')
-  .map(o => o.trim());
-
-console.log("CORS Allowed Origins:", allowedOrigins);
-
-const corsOptions: cors.CorsOptions = {
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-    const isAllowed = allowedOrigins.includes(origin) || origin.endsWith('.vercel.app');
-    callback(null, isAllowed);
-  },
+// Simple, permissive CORS configuration
+app.use(cors({
+  origin: true, // Allow all origins for now to prevent any blocking
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-};
+}));
 
-app.use(cors(corsOptions));
-app.options('/{*path}', cors(corsOptions));
+// Express 5 preflight handler
+app.options('/{*path}', cors());
+
+// Middleware
 app.use(express.json());
 
-// Apply cache-control only to non-preflight requests
+// Request Logger
 app.use((req, res, next) => {
-  if (req.method !== 'OPTIONS') {
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-  }
+  console.log(`[API Request] ${req.method} ${req.originalUrl}`);
   next();
 });
 
-app.get("/health", (req, res) => {
-  res.json({
-    status: "ok",
-    origins: allowedOrigins
-  });
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
 });
 
-app.use(API_ROUTES.PDF, pdfRoutes);
-app.use(API_ROUTES.AUTH, authRoutes);
+// Standard API Routes
+app.use('/api/pdf', pdfRoutes);
+app.use('/api/auth', authRoutes);
 
-// Mount routes without /api prefix in case Render is automatically stripping it
+// Fallback routes in case Render strips the /api prefix
 app.use('/pdf', pdfRoutes);
 app.use('/auth', authRoutes);
 
-// Catch-all 404 handler
-app.use((req, res) => {
-  console.log(`404 NOT FOUND: ${req.method} ${req.originalUrl}`);
-  res.status(404).json({ error: `Route not found: ${req.originalUrl}` });
+// Global Error Handler
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error("Server Error:", err);
+  res.status(500).json({ error: "Internal Server Error" });
 });
 
-// Global error handler
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error("Unhandled Server Error:", err);
-  res.status(500).json({ error: "Internal Server Error" });
+// 404 Handler
+app.use((req, res) => {
+  res.status(404).json({ error: "Route not found" });
 });
 
 app.listen(PORT, () => {
