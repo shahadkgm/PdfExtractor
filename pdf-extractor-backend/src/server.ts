@@ -11,10 +11,37 @@ connectDatabase();
 
 const app = express()
 
-app.use(cors({
-  origin: true,
-  credentials: true
-}));
+const allowedOrigins = [
+  process.env.LOCALHOST,
+  process.env.LOCAL_HOST,
+  process.env.VERCEL_LINK,
+  process.env.BACKEND_URL,
+  process.env.RENDER_URL
+]
+  .filter((o): o is string => typeof o === 'string' && o.trim() !== '')
+  .map(o => o.trim());
+
+console.log("CORS Allowed Origins:", allowedOrigins);
+
+const corsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    if (!origin) return callback(null, true);
+    
+    const isAllowed = allowedOrigins.includes(origin) || origin.endsWith('.vercel.app');
+    
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      console.warn(`CORS blocked request from origin: "${origin}". Allowed origins are:`, allowedOrigins);
+      callback(null, false);
+    }
+  },
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json());
 
 // Prevent browser caching for all API responses (secures back/forward navigation)
