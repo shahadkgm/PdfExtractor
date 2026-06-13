@@ -15,43 +15,37 @@ const allowedOrigins = [
   process.env.LOCALHOST,
   process.env.LOCAL_HOST,
   process.env.VERCEL_LINK,
-  process.env.BACKEND_URL,
-  process.env.RENDER_URL
 ]
   .filter((o): o is string => typeof o === 'string' && o.trim() !== '')
   .map(o => o.trim());
 
 console.log("CORS Allowed Origins:", allowedOrigins);
 
-const corsOptions = {
-  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    
     const isAllowed = allowedOrigins.includes(origin) || origin.endsWith('.vercel.app');
-    
-    if (isAllowed) {
-      callback(null, true);
-    } else {
-      console.warn(`CORS blocked request from origin: "${origin}". Allowed origins are:`, allowedOrigins);
-      callback(null, false);
-    }
+    callback(null, isAllowed);
   },
   credentials: true,
-  optionsSuccessStatus: 200
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// Prevent browser caching for all API responses (secures back/forward navigation)
+// Apply cache-control only to non-preflight requests
 app.use((req, res, next) => {
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
+  if (req.method !== 'OPTIONS') {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
   next();
 });
 
-// Request logger middleware
+// Request logger
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.originalUrl}`);
   next();
@@ -62,4 +56,4 @@ app.use(API_ROUTES.AUTH, authRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-});
+});
