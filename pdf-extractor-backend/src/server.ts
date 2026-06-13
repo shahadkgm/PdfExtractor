@@ -44,7 +44,12 @@ app.use((req, res, next) => {
   }
   next();
 });
-
+app.get("/health", (req, res) => {
+  res.json({
+    status: "ok",
+    origins: allowedOrigins
+  });
+});
 // Request logger
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.originalUrl}`);
@@ -56,4 +61,4 @@ app.use(API_ROUTES.AUTH, authRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-});
+});
