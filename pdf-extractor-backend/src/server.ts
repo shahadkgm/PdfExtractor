@@ -41,7 +41,6 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
 app.use(express.json());
 
 // Prevent browser caching for all API responses (secures back/forward navigation)
