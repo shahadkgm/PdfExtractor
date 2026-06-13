@@ -18,11 +18,8 @@ const allowedOrigin = [
   .filter((o): o is string => typeof o === 'string')
   .map(o => o.trim());
 
-console.log("CORS Allowed Origins initialized:", allowedOrigin);
-
 const corsOptions = {
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    console.log(`CORS check - Incoming Origin: "${origin}"`);
     if (!origin) return callback(null, true);
     
     // Check if the origin matches any in our allowedOrigin list or ends with .vercel.app
@@ -31,7 +28,6 @@ const corsOptions = {
     if (isAllowed) {
       callback(null, true);
     } else {
-      console.warn(`CORS blocked request from origin: "${origin}". Allowed origins are:`, allowedOrigin);
       callback(null, false);
     }
   },
@@ -43,7 +39,6 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 app.use(express.json());
 
-
 // Prevent browser caching for all API responses (secures back/forward navigation)
 app.use((req, res, next) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
@@ -51,6 +46,8 @@ app.use((req, res, next) => {
   res.setHeader('Expires', '0');
   next();
 });
+
+// Request logger middleware
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.originalUrl}`);
   next();
