@@ -33,6 +33,8 @@ const corsOptions: cors.CorsOptions = {
 };
 
 app.use(cors(corsOptions));
+// Handle preflight requests for all routes (Express 5 compatible wildcard)
+app.options('/{*path}', cors(corsOptions));
 app.use(express.json());
 
 // Apply cache-control only to non-preflight requests
