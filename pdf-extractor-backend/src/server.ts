@@ -20,20 +20,27 @@ const allowedOrigin = [
 
 console.log("CORS Allowed Origins initialized:", allowedOrigin);
 
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps, postman, curl, or server-to-server)
+const corsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    console.log(`CORS check - Incoming Origin: "${origin}"`);
     if (!origin) return callback(null, true);
     
-    if (allowedOrigin.includes(origin)) {
+    // Check if the origin matches any in our allowedOrigin list or ends with .vercel.app
+    const isAllowed = allowedOrigin.includes(origin) || origin.endsWith('.vercel.app');
+    
+    if (isAllowed) {
       callback(null, true);
     } else {
       console.warn(`CORS blocked request from origin: "${origin}". Allowed origins are:`, allowedOrigin);
-      callback(new Error('Not allowed by CORS'));
+      callback(null, false);
     }
   },
-  credentials: true
-}));
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json());
 
 // Prevent browser caching for all API responses (secures back/forward navigation)
