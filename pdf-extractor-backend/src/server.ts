@@ -28,14 +28,17 @@ const allowedOrigins = [
 console.log("CORS Allowed Origins:", allowedOrigins);
 
 const corsOptions: cors.CorsOptions = {
-  origin: true,
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    const isAllowed = allowedOrigins.includes(origin) || origin.endsWith('.vercel.app');
+    callback(null, isAllowed);
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
 app.use(cors(corsOptions));
-// Handle preflight requests natively through cors middleware
 app.use(express.json());
 
 // Apply cache-control only to non-preflight requests
@@ -47,20 +50,32 @@ app.use((req, res, next) => {
   }
   next();
 });
+
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
     origins: allowedOrigins
   });
 });
-// Request logger
-app.use((req, res, next) => {
-  console.log(`${req.method} ${req.originalUrl}`);
-  next();
-});
 
 app.use(API_ROUTES.PDF, pdfRoutes);
 app.use(API_ROUTES.AUTH, authRoutes);
+
+// Mount routes without /api prefix in case Render is automatically stripping it
+app.use('/pdf', pdfRoutes);
+app.use('/auth', authRoutes);
+
+// Catch-all 404 handler
+app.use((req, res) => {
+  console.log(`404 NOT FOUND: ${req.method} ${req.originalUrl}`);
+  res.status(404).json({ error: `Route not found: ${req.originalUrl}` });
+});
+
+// Global error handler
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error("Unhandled Server Error:", err);
+  res.status(500).json({ error: "Internal Server Error" });
+});
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
