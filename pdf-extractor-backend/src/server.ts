@@ -11,6 +11,12 @@ connectDatabase();
 
 const app = express()
 
+// Request logger - FIRST middleware so every request is logged
+app.use((req, res, next) => {
+  console.log(`--> ${req.method} ${req.originalUrl} from ${req.headers.origin}`);
+  next();
+});
+
 const allowedOrigins = [
   process.env.LOCALHOST,
   process.env.LOCAL_HOST,
