@@ -28,19 +28,14 @@ const allowedOrigins = [
 console.log("CORS Allowed Origins:", allowedOrigins);
 
 const corsOptions: cors.CorsOptions = {
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-    const isAllowed = allowedOrigins.includes(origin) || origin.endsWith('.vercel.app');
-    callback(null, isAllowed);
-  },
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
 app.use(cors(corsOptions));
-// Handle preflight requests for all routes (Express 5 compatible wildcard)
-app.options('/{*path}', cors(corsOptions));
+// Handle preflight requests natively through cors middleware
 app.use(express.json());
 
 // Apply cache-control only to non-preflight requests
