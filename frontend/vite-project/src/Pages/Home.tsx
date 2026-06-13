@@ -12,7 +12,7 @@ import {
   Eye,
   X
 } from 'lucide-react';
-import { API_ENDPOINTS } from '../constance/apis';
+import { API_ENDPOINTS, API_BASE_URL } from '../constance/apis';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 // Define strict interfaces for our component state
@@ -126,6 +126,8 @@ export default function PDFCraft() {
   // React Query - Auth Submit Mutation
   const authMutation = useMutation({
     mutationFn: async () => {
+      console.log("API_BASE_URL:", API_BASE_URL);
+      console.log("LOGIN_URL:", API_ENDPOINTS.AUTH.LOGIN);
       const url = authMode === 'login' ? API_ENDPOINTS.AUTH.LOGIN : API_ENDPOINTS.AUTH.REGISTER;
       const response = await fetch(url, {
         method: 'POST',
