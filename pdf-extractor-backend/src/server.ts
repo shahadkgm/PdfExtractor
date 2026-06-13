@@ -14,10 +14,24 @@ const allowedOrigin = [
   process.env.LOCALHOST,
   process.env.LOCAL_HOST,
   process.env.VERCEL_LINK
-].filter(Boolean) as string[]
+]
+  .filter((o): o is string => typeof o === 'string')
+  .map(o => o.trim());
+
+console.log("CORS Allowed Origins initialized:", allowedOrigin);
 
 app.use(cors({
-  origin: allowedOrigin,
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, postman, curl, or server-to-server)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigin.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`CORS blocked request from origin: "${origin}". Allowed origins are:`, allowedOrigin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 app.use(express.json());
