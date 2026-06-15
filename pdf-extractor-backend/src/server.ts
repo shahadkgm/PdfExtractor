@@ -13,14 +13,10 @@ const app = express();
 
 // Simple, permissive CORS configuration
 app.use(cors({
-  origin: true, // Allow all origins for now to prevent any blocking
+  origin: process.env.VERCEL_LINK,
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 }));
-
-// Express 5 preflight handler
-app.options('/{*path}', cors());
-
+ 
 // Middleware
 app.use(express.json());
 
@@ -38,10 +34,6 @@ app.get('/health', (req, res) => {
 // Standard API Routes
 app.use('/api/pdf', pdfRoutes);
 app.use('/api/auth', authRoutes);
-
-// Fallback routes in case Render strips the /api prefix
-app.use('/pdf', pdfRoutes);
-app.use('/auth', authRoutes);
 
 // Global Error Handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
