@@ -29,8 +29,8 @@ app.get('/health', (req, res) => {
 });
 
 // Standard API Routes
-app.use('/api/pdf', pdfRoutes);
-app.use('/api/auth', authRoutes);
+app.use('/pdf', pdfRoutes);
+app.use('/auth', authRoutes);
 
 // Global Error Handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
