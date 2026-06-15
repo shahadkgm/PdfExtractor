@@ -11,12 +11,16 @@ connectDatabase();
 
 const app = express();
 
+const FRONTEND_URL = process.env.VERCEL_LINK
+
+console.log("[API URL]", FRONTEND_URL)
+
 // Simple, permissive CORS configuration
 app.use(cors({
-  origin: process.env.VERCEL_LINK,
+  origin: FRONTEND_URL,
   credentials: true,
 }));
- 
+
 // Middleware
 app.use(express.json());
 
