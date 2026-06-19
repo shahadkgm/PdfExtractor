@@ -444,9 +444,35 @@ export default function PDFCraft() {
   });
 
   const handleDeleteHistoryItem = (id: string): void => {
-    if (window.confirm('Are you sure you want to delete this history item?')) {
-      deleteHistoryItemMutation.mutate(id);
-    }
+    toast((t) => (
+      <div className="flex flex-col gap-3">
+        <span className="text-sm font-semibold text-white">Are you sure you want to delete this history item?</span>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+              deleteHistoryItemMutation.mutate(id);
+            }}
+            className="px-3 py-1.5 bg-red-950/80 border border-red-900/50 hover:bg-red-900/80 text-red-400 text-xs font-bold rounded-lg transition-colors cursor-pointer"
+          >
+            Delete
+          </button>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1.5 bg-[#17222b] hover:bg-[#1e2d3b] border border-[#1f374c] text-gray-300 text-xs font-bold rounded-lg transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: Infinity,
+      style: {
+        background: '#0c141c',
+        border: '1px solid #1f2e3d',
+        padding: '16px',
+      }
+    });
   };
 
   // React Query - Download Mutation
