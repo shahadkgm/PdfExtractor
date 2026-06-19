@@ -146,4 +146,39 @@ export class PDFController implements IpdfController {
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ error: StatusMessage.FAILED_DOWNLOAD_HISTORY });
     }
   };
+
+  // delete history item
+  public deleteHistoryItem = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const id = typeof req.params.id === 'string' ? req.params.id : undefined;
+      const userId = req.user?.id;
+
+      await this.pdfService.deleteHistoryItem(id, userId);
+      res.status(StatusCode.OK).json({ message: 'History item deleted successfully' });
+    } catch (error: unknown) {
+      console.error('Error deleting history item:', error);
+      const errorMessage = error instanceof Error ? error.message : '';
+      if (errorMessage === 'MISSING_EXTRACTION_ID') {
+        res.status(StatusCode.BAD_REQUEST).json({ error: StatusMessage.MISSING_EXTRACTION_ID });
+        return;
+      }
+      if (errorMessage === 'USER_ID_MISSING') {
+        res.status(StatusCode.BAD_REQUEST).json({ error: StatusMessage.USER_ID_MISSING });
+        return;
+      }
+      if (errorMessage === 'INVALID_EXTRACTION_ID') {
+        res.status(StatusCode.BAD_REQUEST).json({ error: StatusMessage.INVALID_EXTRACTION_ID });
+        return;
+      }
+      if (errorMessage === 'INVALID_USER_ID') {
+        res.status(StatusCode.BAD_REQUEST).json({ error: StatusMessage.INVALID_USER_ID });
+        return;
+      }
+      if (errorMessage === 'EXTRACTION_NOT_FOUND') {
+        res.status(StatusCode.NOT_FOUND).json({ error: StatusMessage.EXTRACTION_NOT_FOUND });
+        return;
+      }
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ error: 'Failed to delete history item' });
+    }
+  };
 }

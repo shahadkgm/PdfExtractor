@@ -159,4 +159,34 @@ export class PDFService implements IpdfService {
 
     return extraction;
   }
+
+  public async deleteHistoryItem(id: string | undefined, userId: string | undefined): Promise<void> {
+    if (!id) {
+      throw new Error('MISSING_EXTRACTION_ID');
+    }
+    if (!userId) {
+      throw new Error('USER_ID_MISSING');
+    }
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new Error('INVALID_EXTRACTION_ID');
+    }
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      throw new Error('INVALID_USER_ID');
+    }
+
+    const extraction = await this.pdfRepository.findExtractionByIdAndUserId(id, userId);
+    if (!extraction) {
+      throw new Error('EXTRACTION_NOT_FOUND');
+    }
+
+    try {
+      if (fs.existsSync(extraction.filePath)) {
+        fs.unlinkSync(extraction.filePath);
+      }
+    } catch (err) {
+      console.error('Failed to delete physical file during extraction deletion:', err);
+    }
+
+    await this.pdfRepository.deleteExtraction(id);
+  }
 }

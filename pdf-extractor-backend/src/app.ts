@@ -33,7 +33,8 @@ app.use('/pdf', pdfRoutes);
 app.use('/auth', authRoutes);
 
 // Global Error Handler
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error("Server Error:", err);
   res.status(500).json({ error: "Internal Server Error" });
 });

@@ -40,7 +40,7 @@ export const authMiddleware = (
     const decoded = jwt.verify(token, JWT_SECRET) as UserPayload;
     req.user = decoded;
     next();
-  } catch (error) {
+  } catch {
     res.status(StatusCode.BAD_REQUEST).json({ error: StatusMessage.INVALID_OR_EXPIRED_TOKEN });
   }
 };

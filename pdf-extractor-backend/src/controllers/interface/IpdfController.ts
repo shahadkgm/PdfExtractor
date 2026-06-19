@@ -5,4 +5,5 @@ export interface IpdfController {
   extractPages(req: Request, res: Response): Promise<void>;
   getHistory(req: Request, res: Response): Promise<void>;
   downloadHistoryItem(req: Request, res: Response): Promise<void>;  
+  deleteHistoryItem(req: Request, res: Response): Promise<void>;
 }

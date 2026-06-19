@@ -12,4 +12,5 @@ export interface IpdfService {
   ): Promise<Uint8Array>;
   getHistory(userId: string | undefined): Promise<IExtraction[]>;
   downloadHistoryItem(id: string | undefined, userId: string | undefined): Promise<IExtraction>;
+  deleteHistoryItem(id: string | undefined, userId: string | undefined): Promise<void>;
 }

@@ -23,4 +23,7 @@ router.get('/history', authMiddleware, pdfController.getHistory);
 // Endpoint to download history item
 router.get('/history/download/:id', authMiddleware, pdfController.downloadHistoryItem);
 
+// Endpoint to delete history item
+router.delete('/history/:id', authMiddleware, pdfController.deleteHistoryItem);
+
 export default router;

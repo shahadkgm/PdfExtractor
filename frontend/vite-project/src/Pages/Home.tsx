@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { DragEvent } from 'react';
+import { toast } from 'react-hot-toast';
 import { 
   FileUp, 
   SlidersHorizontal, 
@@ -244,13 +245,13 @@ export default function PDFCraft() {
     },
     onError: (error) => {
       console.error('Error uploading file:', error);
-      alert('Failed to upload and parse PDF file.');
+      toast.error('Failed to upload and parse PDF file.');
     }
   });
 
   const handleFile = (file: File): void => {
     if (file.type !== 'application/pdf') {
-      alert('Only PDF files are allowed!');
+      toast.error('Only PDF files are allowed!');
       return;
     }
     setFileName(file.name);
@@ -358,7 +359,7 @@ export default function PDFCraft() {
     },
     onError: (error) => {
       console.error('Error generating preview:', error);
-      alert('Failed to generate preview.');
+      toast.error('Failed to generate preview.');
     }
   });
 
@@ -400,7 +401,7 @@ export default function PDFCraft() {
     },
     onError: (error) => {
       console.error('Failed to preview history item:', error);
-      alert('Failed to preview historical copy.');
+      toast.error('Failed to preview historical copy.');
     }
   });
 
@@ -415,6 +416,37 @@ export default function PDFCraft() {
     }
     setPreviewTitle('Document Preview');
     setPreviewSubtitle('');
+  };
+
+  // React Query - Delete History Item Mutation
+  const deleteHistoryItemMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`${API_ENDPOINTS.PDF.DELETE_HISTORY}/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete history item');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast.success('History item deleted.');
+      queryClient.invalidateQueries({ queryKey: ['pdfHistory', token] });
+    },
+    onError: (error) => {
+      console.error('Failed to delete history item:', error);
+      toast.error('Failed to delete history item.');
+    }
+  });
+
+  const handleDeleteHistoryItem = (id: string): void => {
+    if (window.confirm('Are you sure you want to delete this history item?')) {
+      deleteHistoryItemMutation.mutate(id);
+    }
   };
 
   // React Query - Download Mutation
@@ -453,7 +485,7 @@ export default function PDFCraft() {
     },
     onError: (error) => {
       console.error('Error downloading PDF:', error);
-      alert('Failed to extract and download pages.');
+      toast.error('Failed to extract and download pages.');
     }
   });
 
@@ -813,13 +845,23 @@ export default function PDFCraft() {
                           </p>
                         </div>
                       </div>
-                      <button 
-                        onClick={() => handlePreviewHistoryItem(record)}
-                        className="p-2 bg-[#111e29] hover:bg-[#162736] border border-[#17222b] text-[#00b4d8] rounded-xl hover:scale-105 transition-all shadow-md cursor-pointer flex items-center justify-center shrink-0"
-                        title="Preview Extracted Copy"
-                      >
-                        <Eye size={14} strokeWidth={2.5} />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={() => handlePreviewHistoryItem(record)}
+                          className="p-2 bg-[#111e29] hover:bg-[#162736] border border-[#17222b] text-[#00b4d8] rounded-xl hover:scale-105 transition-all shadow-md cursor-pointer flex items-center justify-center shrink-0"
+                          title="Preview Extracted Copy"
+                        >
+                          <Eye size={14} strokeWidth={2.5} />
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteHistoryItem(record._id)}
+                          className="p-2 bg-red-950/30 hover:bg-red-900/40 border border-red-900/50 text-red-400 rounded-xl hover:scale-105 transition-all shadow-md cursor-pointer flex items-center justify-center shrink-0"
+                          title="Delete History Item"
+                          disabled={deleteHistoryItemMutation.isPending}
+                        >
+                          {deleteHistoryItemMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} strokeWidth={2.5} />}
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>

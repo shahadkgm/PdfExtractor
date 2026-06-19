@@ -10,5 +10,6 @@ export const API_ENDPOINTS = {
     EXTRACT: `${API_BASE_URL}/pdf/extract`,
     HISTORY: `${API_BASE_URL}/pdf/history`,
     DOWNLOAD_HISTORY: `${API_BASE_URL}/pdf/history/download`,
+    DELETE_HISTORY: `${API_BASE_URL}/pdf/history`,
   },
 } as const;
