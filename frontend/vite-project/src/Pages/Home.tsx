@@ -13,6 +13,7 @@ import {
   Eye,
   X
 } from 'lucide-react';
+import { isAxiosError } from 'axios';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { authService } from '../services/authService';
 import { pdfService } from '../services/pdfService';
@@ -142,7 +143,7 @@ export default function PDFCraft() {
   };
 
   const authError = authMutation.error 
-    ? (authMutation.error as any).response?.data?.error || authMutation.error.message 
+    ? (isAxiosError(authMutation.error) ? authMutation.error.response?.data?.error : authMutation.error.message) || authMutation.error.message 
     : '';
   const isAuthLoading = authMutation.isPending;
 
