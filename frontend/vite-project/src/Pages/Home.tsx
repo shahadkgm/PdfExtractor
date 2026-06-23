@@ -13,8 +13,9 @@ import {
   Eye,
   X
 } from 'lucide-react';
-import { API_ENDPOINTS, API_BASE_URL } from '../constance/apis';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { authService } from '../services/authService';
+import { pdfService } from '../services/pdfService';
 
 // Define strict interfaces for our component state
 interface PDFPage {
@@ -106,16 +107,7 @@ export default function PDFCraft() {
   const { data: historyData, isLoading: isHistoryLoading } = useQuery<ExtractionRecord[]>({
     queryKey: ['pdfHistory', token],
     queryFn: async () => {
-      const response = await fetch(API_ENDPOINTS.PDF.HISTORY, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch history');
-      }
-      return response.json();
+      return await pdfService.getHistory();
     },
     enabled: !!token,
   });
@@ -127,25 +119,11 @@ export default function PDFCraft() {
   // React Query - Auth Submit Mutation
   const authMutation = useMutation({
     mutationFn: async () => {
-      console.log("API_BASE_URL:", API_BASE_URL);
-      console.log("LOGIN_URL:", API_ENDPOINTS.AUTH.LOGIN);
-      const url = authMode === 'login' ? API_ENDPOINTS.AUTH.LOGIN : API_ENDPOINTS.AUTH.REGISTER;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: authEmail,
-          password: authPassword,
-        }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || `${authMode === 'login' ? 'Login' : 'Registration'} failed`);
+      if (authMode === 'login') {
+        return await authService.login(authEmail, authPassword);
+      } else {
+        return await authService.register(authEmail, authPassword);
       }
-      return data;
     },
     onSuccess: (data) => {
       localStorage.setItem('token', data.token);
@@ -163,7 +141,9 @@ export default function PDFCraft() {
     authMutation.mutate();
   };
 
-  const authError = authMutation.error instanceof Error ? authMutation.error.message : '';
+  const authError = authMutation.error 
+    ? (authMutation.error as any).response?.data?.error || authMutation.error.message 
+    : '';
   const isAuthLoading = authMutation.isPending;
 
   const handleLogout = (): void => {
@@ -212,22 +192,7 @@ export default function PDFCraft() {
   // React Query - PDF Upload Mutation
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await fetch(API_ENDPOINTS.PDF.UPLOAD, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error('Upload failed');
-      }
-
-      return response.json();
+      return await pdfService.uploadPdf(file);
     },
     onSuccess: (data) => {
       setFileId(data.fileId);
@@ -330,24 +295,8 @@ export default function PDFCraft() {
   // React Query - Preview Mutation
   const previewMutation = useMutation({
     mutationFn: async (orderedPages: number[]) => {
-      const response = await fetch(API_ENDPOINTS.PDF.EXTRACT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          fileId,
-          pages: orderedPages,
-          originalName: fileName
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Preview generation failed');
-      }
-
-      return response.blob();
+      if (!fileId) throw new Error('No file selected');
+      return await pdfService.extractPages(fileId, orderedPages, fileName);
     },
     onSuccess: (blob) => {
       if (previewUrl) {
@@ -376,18 +325,7 @@ export default function PDFCraft() {
   // React Query - Preview History Item Mutation
   const previewHistoryItemMutation = useMutation({
     mutationFn: async (record: ExtractionRecord) => {
-      const response = await fetch(`${API_ENDPOINTS.PDF.DOWNLOAD_HISTORY}/${record._id}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to download file');
-      }
-
-      const blob = await response.blob();
+      const blob = await pdfService.downloadHistoryItem(record._id);
       return { blob, record };
     },
     onSuccess: ({ blob, record }) => {
@@ -421,17 +359,7 @@ export default function PDFCraft() {
   // React Query - Delete History Item Mutation
   const deleteHistoryItemMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`${API_ENDPOINTS.PDF.DELETE_HISTORY}/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete history item');
-      }
-      return response.json();
+      return await pdfService.deleteHistoryItem(id);
     },
     onSuccess: () => {
       toast.success('History item deleted.');
@@ -478,24 +406,8 @@ export default function PDFCraft() {
   // React Query - Download Mutation
   const downloadMutation = useMutation({
     mutationFn: async (orderedPages: number[]) => {
-      const response = await fetch(API_ENDPOINTS.PDF.EXTRACT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          fileId,
-          pages: orderedPages,
-          originalName: fileName
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Extraction failed');
-      }
-
-      return response.blob();
+      if (!fileId) throw new Error('No file selected');
+      return await pdfService.extractPages(fileId, orderedPages, fileName);
     },
     onSuccess: (blob) => {
       const url = window.URL.createObjectURL(blob);
