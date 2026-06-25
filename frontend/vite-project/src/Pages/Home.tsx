@@ -17,7 +17,12 @@ import { isAxiosError } from 'axios';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { authService } from '../services/authService';
 import { pdfService } from '../services/pdfService';
+import { Document, Page, pdfjs } from 'react-pdf';
 
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url,
+).toString();
 // Define strict interfaces for our component state
 interface PDFPage {
   id: number;
@@ -67,6 +72,7 @@ export default function PDFCraft() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewTitle, setPreviewTitle] = useState<string>('Document Preview');
   const [previewSubtitle, setPreviewSubtitle] = useState<string>('');
+  const [numPages, setNumPages] = useState<number | null>(null);
 
   // Drag & Drop Reordering States
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -355,6 +361,7 @@ export default function PDFCraft() {
     }
     setPreviewTitle('Document Preview');
     setPreviewSubtitle('');
+    setNumPages(null);
   };
 
   // React Query - Delete History Item Mutation
@@ -891,12 +898,34 @@ export default function PDFCraft() {
               </button>
             </div>
             {/* Modal Body */}
-            <div className="flex-1 bg-[#070b0e] relative">
-              <iframe 
-                src={`${previewUrl}#toolbar=0`} 
-                className="w-full h-full border-0" 
-                title="PDF Preview"
-              />
+            <div className="flex-1 bg-[#070b0e] relative overflow-y-auto">
+              <Document
+                file={previewUrl}
+                onLoadSuccess={({ numPages }) => setNumPages(numPages)}
+                loading={
+                  <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-3 py-12">
+                    <Loader2 size={32} className="animate-spin text-[#00b4d8]" />
+                    <span className="text-sm font-semibold tracking-wide">Rendering PDF...</span>
+                  </div>
+                }
+                error={
+                  <div className="flex items-center justify-center h-full text-red-400 py-12 text-sm font-semibold">
+                    Failed to load PDF preview.
+                  </div>
+                }
+                className="flex flex-col items-center py-6 gap-6"
+              >
+                {numPages && Array.from(new Array(numPages), (el, index) => (
+                  <Page
+                    key={`page_${index + 1}`}
+                    pageNumber={index + 1}
+                    className="shadow-2xl rounded-xl overflow-hidden border border-[#1f2e3d]"
+                    renderAnnotationLayer={false}
+                    renderTextLayer={false}
+                    width={Math.min(window.innerWidth - 64, 800)}
+                  />
+                ))}
+              </Document>
             </div>
           </div>
         </div>
