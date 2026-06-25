@@ -542,7 +542,7 @@ export default function PDFCraft() {
 
   // Logged-in PDF editor view
   return (
-    <div className="min-h-screen bg-[#0d151a] text-[#e2e8f0] font-sans antialiased flex flex-col relative pb-28">
+    <div className="min-h-screen bg-[#0d151a] text-[#e2e8f0] font-sans antialiased flex flex-col relative pb-28 overflow-x-hidden">
       
       {/* Hidden file input */}
       <input 
@@ -554,7 +554,7 @@ export default function PDFCraft() {
       />
 
       {/* 1. Global Navigation Bar */}
-      <header className="w-full max-w-7xl mx-auto flex justify-between items-center px-4 sm:px-8 py-5 border-b border-[#17222b]">
+      <header className="w-full max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0 px-4 sm:px-8 py-5 border-b border-[#17222b]">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-[#17222b] rounded-xl text-[#00b4d8]">
             <FileText size={22} />
@@ -569,11 +569,11 @@ export default function PDFCraft() {
               className="flex items-center gap-2 px-3 py-1.5 bg-red-950/30 border border-red-900/50 hover:bg-red-900/40 text-red-400 hover:text-red-300 rounded-xl transition-all text-xs font-semibold cursor-pointer"
             >
               <Trash2 size={14} />
-              <span>Clear File</span>
+              <span className="hidden sm:inline">Clear File</span>
             </button>
           )}
-          <div className="flex items-center gap-3 bg-[#0c141c] border border-[#17222b] rounded-xl px-4 py-1.5 shadow-sm">
-            <span className="text-xs text-gray-400 font-semibold">{userEmail}</span>
+          <div className="flex items-center gap-2 sm:gap-3 bg-[#0c141c] border border-[#17222b] rounded-xl px-3 sm:px-4 py-1.5 shadow-sm">
+            <span className="text-xs text-gray-400 font-semibold truncate max-w-[80px] sm:max-w-xs" title={userEmail}>{userEmail}</span>
             <span className="text-gray-700">|</span>
             <button 
               onClick={handleLogout}

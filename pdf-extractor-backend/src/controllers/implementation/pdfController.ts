@@ -12,7 +12,6 @@ export class PDFController implements IpdfController {
     this.pdfService = pdfService;
   }
 
-  // controller to upload and process PDF file
   public uploadPDF = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       const result = await this.pdfService.processUploadedPDF(req.file);
@@ -34,7 +33,6 @@ export class PDFController implements IpdfController {
     }
   };
 
-  // controller to extract specified pages
   public extractPages = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       const fileId = typeof req.body.fileId === 'string' ? req.body.fileId : undefined;
@@ -83,7 +81,6 @@ export class PDFController implements IpdfController {
     }
   };
 
-  // get user extraction history (up to 4 items)
   public getHistory = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       const userId = req.user?.id;
@@ -104,7 +101,6 @@ export class PDFController implements IpdfController {
     }
   };
 
-  // download historical copy
   public downloadHistoryItem = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       const id = typeof req.params.id === 'string' ? req.params.id : undefined;
