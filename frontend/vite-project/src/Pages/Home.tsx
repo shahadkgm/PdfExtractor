@@ -19,10 +19,7 @@ import { authService } from '../services/authService';
 import { pdfService } from '../services/pdfService';
 import { Document, Page, pdfjs } from 'react-pdf';
 
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url,
-).toString();
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 // Define strict interfaces for our component state
 interface PDFPage {
   id: number;
@@ -386,7 +383,7 @@ export default function PDFCraft() {
         <div className="flex gap-2">
           <button
             onClick={() => {
-              toast.dismiss(t.id);
+              toast.remove(t.id);
               deleteHistoryItemMutation.mutate(id);
             }}
             className="px-3 py-1.5 bg-red-950/80 border border-red-900/50 hover:bg-red-900/80 text-red-400 text-xs font-bold rounded-lg transition-colors cursor-pointer"
@@ -394,7 +391,7 @@ export default function PDFCraft() {
             Delete
           </button>
           <button
-            onClick={() => toast.dismiss(t.id)}
+            onClick={() => toast.remove(t.id)}
             className="px-3 py-1.5 bg-[#17222b] hover:bg-[#1e2d3b] border border-[#1f374c] text-gray-300 text-xs font-bold rounded-lg transition-colors cursor-pointer"
           >
             Cancel
@@ -460,6 +457,39 @@ export default function PDFCraft() {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  const handleClearFile = (): void => {
+    toast((t) => (
+      <div className="flex flex-col gap-3">
+        <span className="text-sm font-semibold text-white">Are you sure you want to clear the current file?</span>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              toast.remove(t.id);
+              resetState();
+              toast.success('Workspace cleared.');
+            }}
+            className="px-3 py-1.5 bg-red-950/80 border border-red-900/50 hover:bg-red-900/80 text-red-400 text-xs font-bold rounded-lg transition-colors cursor-pointer"
+          >
+            Clear File
+          </button>
+          <button
+            onClick={() => toast.remove(t.id)}
+            className="px-3 py-1.5 bg-[#17222b] hover:bg-[#1e2d3b] border border-[#1f374c] text-gray-300 text-xs font-bold rounded-lg transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: Infinity,
+      style: {
+        background: '#0c141c',
+        border: '1px solid #1f2e3d',
+        padding: '16px',
+      }
+    });
   };
 
   // Render Authentication View if not logged in
@@ -572,7 +602,7 @@ export default function PDFCraft() {
         <div className="flex items-center gap-4">
           {fileId && (
             <button 
-              onClick={resetState}
+              onClick={handleClearFile}
               className="flex items-center gap-2 px-3 py-1.5 bg-red-950/30 border border-red-900/50 hover:bg-red-900/40 text-red-400 hover:text-red-300 rounded-xl transition-all text-xs font-semibold cursor-pointer"
             >
               <Trash2 size={14} />
