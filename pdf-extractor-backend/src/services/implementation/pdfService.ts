@@ -8,12 +8,12 @@ import { IExtraction } from '../../models/Extraction.js';
 import mongoose from 'mongoose';
 
 export class PDFService implements IpdfService {
-  private pdfRepository: IpdfRepository;
-  private uploadDir: string;
+  private _pdfRepository: IpdfRepository;
+  private _uploadDir: string;
 
   constructor(pdfRepository: IpdfRepository) {
-    this.pdfRepository = pdfRepository;
-    this.uploadDir = uploadDir;
+    this._pdfRepository = pdfRepository;
+    this._uploadDir = uploadDir;
   }
 
   public async processUploadedPDF(file: Express.Multer.File | undefined): Promise<{ fileId: string; originalName: string; pageCount: number }> {
@@ -76,13 +76,13 @@ export class PDFService implements IpdfService {
       throw new Error('INVALID_PAGES_LIST');
     }
     const resolvedUserId = userId || 'anonymous';
-    const sourcePath = path.join(this.uploadDir, resolvedUserId, fileId);
+    const sourcePath = path.join(this._uploadDir, resolvedUserId, fileId);
     
     const numberPages = pages.map(p => Number(p));
     const pdfBytes = await this.extractPages(sourcePath, numberPages);
 
     if (mongoose.Types.ObjectId.isValid(resolvedUserId)) {
-      const extractionsDir = path.join(this.uploadDir, resolvedUserId, 'extractions');
+      const extractionsDir = path.join(this._uploadDir, resolvedUserId, 'extractions');
       if (!fs.existsSync(extractionsDir)) {
         fs.mkdirSync(extractionsDir, { recursive: true });
       }
@@ -96,7 +96,7 @@ export class PDFService implements IpdfService {
 
       // Save record in MongoDB
       const resolvedOriginalName = typeof originalName === 'string' ? originalName : 'Document.pdf';
-      await this.pdfRepository.createExtraction(
+      await this._pdfRepository.createExtraction(
         resolvedUserId,
         resolvedOriginalName,
         extractedFileName,
@@ -105,7 +105,7 @@ export class PDFService implements IpdfService {
       );
 
       // Enforce the 4-copy retention limit
-      const extractions = await this.pdfRepository.findExtractionsByUserId(resolvedUserId);
+      const extractions = await this._pdfRepository.findExtractionsByUserId(resolvedUserId);
       if (extractions.length > 4) {
         const toDelete = extractions.slice(4); // Keep newest 4 (0, 1, 2, 3)
         for (const record of toDelete) {
@@ -116,7 +116,7 @@ export class PDFService implements IpdfService {
           } catch (err) {
             console.error('Failed to delete physical file:', err);
           }
-          await this.pdfRepository.deleteExtraction(record._id.toString());
+          await this._pdfRepository.deleteExtraction(record._id.toString());
         }
       }
     }
@@ -131,7 +131,7 @@ export class PDFService implements IpdfService {
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       throw new Error('INVALID_USER_ID');
     }
-    return await this.pdfRepository.findExtractionsByUserId(userId);
+    return await this._pdfRepository.findExtractionsByUserId(userId);
   }
 
   public async downloadHistoryItem(id: string | undefined, userId: string | undefined): Promise<IExtraction> {
@@ -148,7 +148,7 @@ export class PDFService implements IpdfService {
       throw new Error('INVALID_USER_ID');
     }
 
-    const extraction = await this.pdfRepository.findExtractionByIdAndUserId(id, userId);
+    const extraction = await this._pdfRepository.findExtractionByIdAndUserId(id, userId);
     if (!extraction) {
       throw new Error('EXTRACTION_NOT_FOUND');
     }
@@ -174,7 +174,7 @@ export class PDFService implements IpdfService {
       throw new Error('INVALID_USER_ID');
     }
 
-    const extraction = await this.pdfRepository.findExtractionByIdAndUserId(id, userId);
+    const extraction = await this._pdfRepository.findExtractionByIdAndUserId(id, userId);
     if (!extraction) {
       throw new Error('EXTRACTION_NOT_FOUND');
     }
@@ -187,6 +187,6 @@ export class PDFService implements IpdfService {
       console.error('Failed to delete physical file during extraction deletion:', err);
     }
 
-    await this.pdfRepository.deleteExtraction(id);
+    await this._pdfRepository.deleteExtraction(id);
   }
 }

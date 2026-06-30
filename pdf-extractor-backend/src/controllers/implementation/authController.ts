@@ -5,16 +5,16 @@ import { IauthController } from '../interface/IauthController.js';
 import { IauthService } from '../../services/interface/IauthService.js';
 
 export class AuthController implements IauthController {
-  private authService: IauthService;
+  private _authService: IauthService;
 
   constructor(authService: IauthService) {
-    this.authService = authService;
+    this._authService = authService;
   }
 
   public register = async (req: Request, res: Response): Promise<void> => {
     try {
       const { email, password } = req.body;
-      const result = await this.authService.registerUser(email, password);
+      const result = await this._authService.registerUser(email, password);
       res.status(StatusCode.CREATED).json(result);
     } catch (error: unknown) {
       console.error('Registration error:', error);
@@ -34,7 +34,7 @@ export class AuthController implements IauthController {
   public login = async (req: Request, res: Response): Promise<void> => {
     try {
       const { email, password } = req.body;
-      const result = await this.authService.loginUser(email, password);
+      const result = await this._authService.loginUser(email, password);
       res.json(result);
     } catch (error: unknown) {
       console.error('Login error:', error);

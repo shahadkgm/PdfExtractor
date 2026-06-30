@@ -5,10 +5,10 @@ import { IauthRepository } from '../../repository/interface/IauthRepository.js';
 import { JWT_SECRET } from '../../middleware/authMiddleware.js';
 
 export class AuthService implements IauthService {
-  private authRepository: IauthRepository;
+  private _authRepository: IauthRepository;
 
   constructor(authRepository: IauthRepository) {
-    this.authRepository = authRepository;
+    this._authRepository = authRepository;
   }
 
   public async registerUser(email: string | undefined, password: string | undefined): Promise<{ token: string; email: string }> {
@@ -17,13 +17,13 @@ export class AuthService implements IauthService {
     }
     const lowerEmail = email.toLowerCase().trim();
 
-    const existingUser = await this.authRepository.findByEmail(lowerEmail);
+    const existingUser = await this._authRepository.findByEmail(lowerEmail);
     if (existingUser) {
       throw new Error('USER_ALREADY_EXISTS');
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const newUser = await this.authRepository.create(lowerEmail, passwordHash);
+    const newUser = await this._authRepository.create(lowerEmail, passwordHash);
 
     const token = jwt.sign(
       { id: newUser._id.toString(), email: newUser.email },
@@ -40,7 +40,7 @@ export class AuthService implements IauthService {
     }
     const lowerEmail = email.toLowerCase().trim();
 
-    const user = await this.authRepository.findByEmail(lowerEmail);
+    const user = await this._authRepository.findByEmail(lowerEmail);
     if (!user) {
       throw new Error('INVALID_CREDENTIALS');
     }

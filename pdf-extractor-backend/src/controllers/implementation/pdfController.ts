@@ -6,15 +6,15 @@ import { IpdfController } from '../interface/IpdfController.js';
 import { IpdfService } from '../../services/interface/IpdfService.js';
 
 export class PDFController implements IpdfController {
-  private pdfService: IpdfService;
+  private _pdfService: IpdfService;
 
   constructor(pdfService: IpdfService) {
-    this.pdfService = pdfService;
+    this._pdfService = pdfService;
   }
 
   public uploadPDF = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
-      const result = await this.pdfService.processUploadedPDF(req.file);
+      const result = await this._pdfService.processUploadedPDF(req.file);
       res.json(result);
     } catch (error: unknown) {
       console.error('Error uploading PDF:', error);
@@ -40,7 +40,7 @@ export class PDFController implements IpdfController {
       const originalName = typeof req.body.originalName === 'string' ? req.body.originalName : undefined;
       const userId = req.user?.id;
 
-      const pdfBytes = await this.pdfService.extractAndSavePages(
+      const pdfBytes = await this._pdfService.extractAndSavePages(
         userId,
         fileId,
         pages,
@@ -84,7 +84,7 @@ export class PDFController implements IpdfController {
   public getHistory = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       const userId = req.user?.id;
-      const extractions = await this.pdfService.getHistory(userId);
+      const extractions = await this._pdfService.getHistory(userId);
       res.json(extractions);
     } catch (error: unknown) {
       console.error('Error fetching history:', error);
@@ -106,7 +106,7 @@ export class PDFController implements IpdfController {
       const id = typeof req.params.id === 'string' ? req.params.id : undefined;
       const userId = req.user?.id;
 
-      const extraction = await this.pdfService.downloadHistoryItem(id, userId);
+      const extraction = await this._pdfService.downloadHistoryItem(id, userId);
 
       const baseName = extraction.originalFileName.replace(/\.[^/.]+$/, "");
       res.setHeader('Content-Type', 'application/pdf');
@@ -149,7 +149,7 @@ export class PDFController implements IpdfController {
       const id = typeof req.params.id === 'string' ? req.params.id : undefined;
       const userId = req.user?.id;
 
-      await this.pdfService.deleteHistoryItem(id, userId);
+      await this._pdfService.deleteHistoryItem(id, userId);
       res.status(StatusCode.OK).json({ message: 'History item deleted successfully' });
     } catch (error: unknown) {
       console.error('Error deleting history item:', error);
