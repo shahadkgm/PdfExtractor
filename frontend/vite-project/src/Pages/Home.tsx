@@ -15,12 +15,10 @@ import {
   X
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { authService } from '../services/authService';
 import { pdfService } from '../services/pdfService';
 import { Document, Page, pdfjs } from 'react-pdf';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
-// Define strict interfaces for our component state
 interface PDFPage {
   id: number;
   label: string;
