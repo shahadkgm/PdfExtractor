@@ -59,6 +59,7 @@ export default function PDFCraft() {
       return [];
     }
   });
+  const [pdfFileUrl, setPdfFileUrl] = useState<string | null>(() => localStorage.getItem('pdfFileUrl'));
   const [fileId, setFileId] = useState<string | null>(() => localStorage.getItem('fileId'));
   const [fileName, setFileName] = useState<string>(() => localStorage.getItem('fileName') || '');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -85,6 +86,14 @@ export default function PDFCraft() {
       localStorage.removeItem('fileName');
     }
   }, [fileName]);
+
+  useEffect(() => {
+    if (pdfFileUrl) {
+      localStorage.setItem('pdfFileUrl', pdfFileUrl);
+    } else {
+      localStorage.removeItem('pdfFileUrl');
+    }
+  }, [pdfFileUrl]);
 
   useEffect(() => {
     if (pdfPages && pdfPages.length > 0) {
@@ -196,6 +205,12 @@ export default function PDFCraft() {
       return;
     }
     setFileName(file.name);
+    try {
+      const url = URL.createObjectURL(file);
+      setPdfFileUrl(url);
+    } catch (err) {
+      console.error('Error creating object URL:', err);
+    }
     uploadMutation.mutate(file);
   };
 
@@ -393,6 +408,12 @@ export default function PDFCraft() {
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
+      
+      // Clear selections after successful download
+      setSelectedPages([]);
+      setRangeInput('');
+      toast.success('Extraction downloaded successfully!');
+      
       queryClient.invalidateQueries({ queryKey: ['pdfHistory', token] });
     },
     onError: (error) => {
@@ -413,10 +434,12 @@ export default function PDFCraft() {
     setPdfPages([]);
     setFileId(null);
     setFileName('');
+    setPdfFileUrl(null);
     setSelectedPages([]);
     setRangeInput('');
     localStorage.removeItem('fileId');
     localStorage.removeItem('fileName');
+    localStorage.removeItem('pdfFileUrl');
     localStorage.removeItem('pdfPages');
     localStorage.removeItem('selectedPages');
     if (previewUrl) {
@@ -601,6 +624,80 @@ export default function PDFCraft() {
                   </div>
                 </div>
 
+                {/* Selected Ranges Preview Section */}
+                {selectedPages.length > 0 && (
+                  <div className="space-y-4 pt-4">
+                    <h3 className="text-sm font-black tracking-widest text-[#00b4d8] uppercase">Selected Ranges</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {(() => {
+                        const sorted = [...selectedPages].sort((a,b) => a - b);
+                        const ranges = [];
+                        let start = sorted[0];
+                        let end = sorted[0];
+                        for (let i = 1; i < sorted.length; i++) {
+                          if (sorted[i] === end + 1) {
+                            end = sorted[i];
+                          } else {
+                            ranges.push([start, end]);
+                            start = sorted[i];
+                            end = sorted[i];
+                          }
+                        }
+                        if (sorted.length > 0) ranges.push([start, end]);
+
+                        return ranges.map((range, index) => {
+                          const [rStart, rEnd] = range;
+                          return (
+                            <div key={index} className="flex flex-col items-center gap-3">
+                              <span className="text-gray-400 text-sm font-semibold">Range {index + 1}</span>
+                              <div className="border-2 border-dashed border-[#1f2e3d] rounded-xl p-4 flex items-center justify-center gap-4 bg-[#0c141c] w-full">
+                                {/* Start Page Card */}
+                                <div className="aspect-[3/4] w-24 rounded-lg overflow-hidden border border-[#17222b] relative bg-white flex flex-col items-center justify-center shadow-md">
+                                  {pdfFileUrl ? (
+                                    <Document file={pdfFileUrl}>
+                                      <Page pageNumber={rStart} width={96} renderTextLayer={false} renderAnnotationLayer={false} />
+                                    </Document>
+                                  ) : (
+                                    <FileText className="text-gray-400" />
+                                  )}
+                                  <div className="absolute bottom-0 inset-x-0 bg-black/70 text-center py-0.5">
+                                    <span className="text-[10px] font-bold text-white">{rStart}</span>
+                                  </div>
+                                </div>
+                                
+                                {rStart !== rEnd && (
+                                  <>
+                                    <span className="text-gray-500 font-black tracking-widest text-lg">...</span>
+                                    {/* End Page  */}
+                                    <div className="aspect-[3/4] w-24 rounded-lg overflow-hidden border border-[#17222b] relative bg-white flex flex-col items-center justify-center shadow-md">
+                                      {pdfFileUrl ? (
+                                        <Document file={pdfFileUrl}>
+                                          <Page pageNumber={rEnd} width={96} renderTextLayer={false} renderAnnotationLayer={false} />
+                                        </Document>
+                                      ) : (
+                                        <FileText className="text-gray-400" />
+                                      )}
+                                      <div className="absolute bottom-0 inset-x-0 bg-black/70 text-center py-0.5">
+                                        <span className="text-[10px] font-bold text-white">{rEnd}</span>
+                                      </div>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex flex-col gap-1 mt-6">
+                  <span className="font-black tracking-widest text-gray-400 uppercase text-xs sm:text-sm">
+                    All Pages
+                  </span>
+                </div>
+
                 {/* 3. Dynamic Responsive Grid Canvas with Drag-and-Drop Reordering */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6 pt-2">
                   {pdfPages.map((page, index) => {
@@ -622,11 +719,30 @@ export default function PDFCraft() {
                             : 'border-[#17222b] bg-[#111b24] hover:border-gray-700'
                           } ${isCurrentlyDragged ? 'opacity-30 scale-95 border-dashed border-[#00b4d8]' : ''}`}
                       >
-                        <div className="absolute inset-0 flex items-center justify-center text-gray-700 group-hover:text-gray-500 transition-colors">
-                          <div className="w-10 h-10 rounded-xl bg-[#0c141c] flex items-center justify-center border border-[#17222b]">
-                            <FileText size={20} className={isSelected ? 'text-[#00b4d8]' : ''} />
+                        {pdfFileUrl ? (
+                          <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden flex items-center justify-center bg-white">
+                            <Document file={pdfFileUrl} loading={
+                              <div className="flex items-center justify-center text-gray-400">
+                                <Loader2 size={24} className="animate-spin" />
+                              </div>
+                            }>
+                              <Page 
+                                pageNumber={page.id} 
+                                width={180} 
+                                renderTextLayer={false} 
+                                renderAnnotationLayer={false} 
+                                className="transition-transform duration-300 group-hover:scale-105"
+                              />
+                            </Document>
+                            <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors" />
                           </div>
-                        </div>
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center text-gray-700 group-hover:text-gray-500 transition-colors">
+                            <div className="w-10 h-10 rounded-xl bg-[#0c141c] flex items-center justify-center border border-[#17222b]">
+                              <FileText size={20} className={isSelected ? 'text-[#00b4d8]' : ''} />
+                            </div>
+                          </div>
+                        )}
 
                         {/* Selection Circle Overlay */}
                         <div className="absolute top-3.5 right-3.5">
@@ -759,24 +875,6 @@ export default function PDFCraft() {
         >
           <LayoutGrid size={20} />
         </button>
-        
-        {/* Preview Button */}
-        <button 
-          onClick={handlePreview}
-          className={`p-3 rounded-xl transition-all cursor-pointer relative ${
-            selectedPages.length > 0 && !isPreviewing && !isProcessing
-              ? 'bg-[#17222b] text-[#00b4d8] border border-[#00b4d8]/40 hover:bg-[#1e2d3b] hover:text-[#00c5eb]' 
-              : 'text-gray-600 bg-gray-900/20 cursor-not-allowed border border-transparent'
-          }`}
-          title="Preview Selected Pages"
-          disabled={selectedPages.length === 0 || isPreviewing || isProcessing}
-        >
-          {isPreviewing ? (
-            <Loader2 size={20} className="animate-spin" />
-          ) : (
-            <Eye size={20} />
-          )}
-        </button>
 
         <button 
           onClick={handleDownload}
@@ -799,7 +897,7 @@ export default function PDFCraft() {
         </button>
       </div>
 
-      {/* 5. PDF Preview Modal Overlay */}
+      {/* (Used for History) */}
       {previewUrl && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6">
           <div className="bg-[#0c141c] border border-[#1f2e3d] w-full max-w-4xl h-[85vh] rounded-2xl overflow-hidden flex flex-col shadow-2xl">
