@@ -14,7 +14,7 @@ export class PDFController implements IpdfController {
 
   public uploadPDF = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
-      const result = await this._pdfService.processUploadedPDF(req.file);
+      const result = await this._pdfService.processUploadedPDF(req.file, req.user?.id);
       res.json(result);
     } catch (error: unknown) {
       console.error('Error uploading PDF:', error);

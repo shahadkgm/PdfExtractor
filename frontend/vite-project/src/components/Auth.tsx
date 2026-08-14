@@ -13,6 +13,8 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
   const [authEmail, setAuthEmail] = useState<string>('');
   const [authPassword, setAuthPassword] = useState<string>('');
 
+  const [validationError, setValidationError] = useState<string>('');
+
   const authMutation = useMutation({
     mutationFn: async () => {
       if (authMode === 'login') {
@@ -24,6 +26,7 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
     onSuccess: (data) => {
       setAuthEmail('');
       setAuthPassword('');
+      setValidationError('');
       authMutation.reset();
       onAuthSuccess(data.token, data.email);
     },
@@ -31,6 +34,25 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
 
   const handleAuthSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
+    setValidationError('');
+    
+    // Basic validation
+    if (!authEmail || !authPassword) {
+      setValidationError('Email and Password are required.');
+      return;
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(authEmail)) {
+      setValidationError('Please enter a valid email address.');
+      return;
+    }
+    
+    if (authMode === 'register' && authPassword.length < 6) {
+      setValidationError('Password must be at least 6 characters long.');
+      return;
+    }
+
     authMutation.mutate();
   };
 
@@ -54,11 +76,15 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
           </p>
         </div>
 
-        {authError && (
+        {validationError ? (
+          <div className="p-3 bg-red-950/30 border border-red-900/50 rounded-xl text-red-400 text-xs font-semibold text-center">
+            {validationError}
+          </div>
+        ) : authError ? (
           <div className="p-3 bg-red-950/30 border border-red-900/50 rounded-xl text-red-400 text-xs font-semibold text-center">
             {authError}
           </div>
-        )}
+        ) : null}
 
         <form onSubmit={handleAuthSubmit} className="space-y-4">
           <div className="space-y-1.5">

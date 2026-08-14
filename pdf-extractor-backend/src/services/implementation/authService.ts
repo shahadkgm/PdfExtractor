@@ -17,6 +17,15 @@ export class AuthService implements IauthService {
     }
     const lowerEmail = email.toLowerCase().trim();
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(lowerEmail)) {
+      throw new Error('INVALID_EMAIL_FORMAT');
+    }
+
+    if (password.length < 6) {
+      throw new Error('WEAK_PASSWORD');
+    }
+
     const existingUser = await this._authRepository.findByEmail(lowerEmail);
     if (existingUser) {
       throw new Error('USER_ALREADY_EXISTS');

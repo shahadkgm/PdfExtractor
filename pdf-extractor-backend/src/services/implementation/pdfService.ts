@@ -16,11 +16,11 @@ export class PDFService implements IpdfService {
     this._uploadDir = uploadDir;
   }
 
-  public async processUploadedPDF(file: Express.Multer.File | undefined): Promise<{ fileId: string; originalName: string; pageCount: number }> {
+  public async processUploadedPDF(file: Express.Multer.File | undefined, userId: string | undefined): Promise<{ fileId: string; originalName: string; pageCount: number }> {
     if (!file) {
       throw new Error('NO_FILE_UPLOADED');
     }
-    const pageCount = await this.getPageCount(file.path);
+    const pageCount = await this.getPageCount(userId, file.filename);
     return {
       fileId: file.filename,
       originalName: file.originalname,
@@ -28,7 +28,14 @@ export class PDFService implements IpdfService {
     };
   }
 
-  public async getPageCount(filePath: string): Promise<number> {
+  public async getPageCount(userId: string | undefined, fileId: string | undefined): Promise<number> {
+    if (!fileId || typeof fileId !== 'string') {
+      throw new Error('MISSING_FILE_ID');
+    }
+    const resolvedUserId = userId || 'anonymous';
+    const safeFileId = path.basename(fileId);
+    const filePath = path.join(this._uploadDir, resolvedUserId, safeFileId);
+
     if (!fs.existsSync(filePath)) {
       throw new Error('FILE_NOT_FOUND');
     }
@@ -37,7 +44,14 @@ export class PDFService implements IpdfService {
     return pdfDoc.getPageCount();
   }
 
-  public async extractPages(sourcePath: string, pages: number[]): Promise<Uint8Array> {
+  public async extractPages(userId: string | undefined, fileId: string | undefined, pages: number[]): Promise<Uint8Array> {
+    if (!fileId || typeof fileId !== 'string') {
+      throw new Error('MISSING_FILE_ID');
+    }
+    const resolvedUserId = userId || 'anonymous';
+    const safeFileId = path.basename(fileId);
+    const sourcePath = path.join(this._uploadDir, resolvedUserId, safeFileId);
+
     if (!fs.existsSync(sourcePath)) {
       throw new Error('FILE_NOT_FOUND');
     }
@@ -76,10 +90,8 @@ export class PDFService implements IpdfService {
       throw new Error('INVALID_PAGES_LIST');
     }
     const resolvedUserId = userId || 'anonymous';
-    const sourcePath = path.join(this._uploadDir, resolvedUserId, fileId);
-    
     const numberPages = pages.map(p => Number(p));
-    const pdfBytes = await this.extractPages(sourcePath, numberPages);
+    const pdfBytes = await this.extractPages(resolvedUserId, fileId, numberPages);
 
     if (mongoose.Types.ObjectId.isValid(resolvedUserId)) {
       const extractionsDir = path.join(this._uploadDir, resolvedUserId, 'extractions');

@@ -23,6 +23,14 @@ export class AuthController implements IauthController {
         res.status(StatusCode.BAD_REQUEST).json({ error: StatusMessage.EMAIL_PASSWORD_REQUIRED });
         return;
       }
+      if (errorMessage === 'INVALID_EMAIL_FORMAT') {
+        res.status(StatusCode.BAD_REQUEST).json({ error: 'Invalid email format' });
+        return;
+      }
+      if (errorMessage === 'WEAK_PASSWORD') {
+        res.status(StatusCode.BAD_REQUEST).json({ error: 'Password must be at least 6 characters' });
+        return;
+      }
       if (errorMessage === 'USER_ALREADY_EXISTS') {
         res.status(StatusCode.BAD_REQUEST).json({ error: StatusMessage.USER_ALREADY_EXISTS_MSG });
         return;
@@ -44,7 +52,7 @@ export class AuthController implements IauthController {
         return;
       }
       if (errorMessage === 'INVALID_CREDENTIALS') {
-        res.status(StatusCode.BAD_REQUEST).json({ error: StatusMessage.INVALID_CREDENTIALS });
+        res.status(StatusCode.UNAUTHORIZED).json({ error: StatusMessage.INVALID_CREDENTIALS });
         return;
       }
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ error: StatusMessage.LOGIN_FAILED });

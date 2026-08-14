@@ -282,35 +282,6 @@ export default function PDFCraft() {
       .map((p) => p.id);
   };
 
-  const previewMutation = useMutation({
-    mutationFn: async (orderedPages: number[]) => {
-      if (!fileId) throw new Error('No file selected');
-      return await pdfService.extractPages(fileId, orderedPages, fileName);
-    },
-    onSuccess: (blob) => {
-      if (previewUrl) {
-        window.URL.revokeObjectURL(previewUrl);
-      }
-      const url = window.URL.createObjectURL(blob);
-      setPreviewUrl(url);
-      queryClient.invalidateQueries({ queryKey: ['pdfHistory', token] });
-    },
-    onError: (error) => {
-      console.error('Error generating preview:', error);
-      toast.error('Failed to generate preview.');
-    }
-  });
-
-  const handlePreview = async (): Promise<void> => {
-    const orderedPages = getOrderedSelectedPages();
-    if (!fileId || orderedPages.length === 0) return;
-    setPreviewTitle('Workspace Preview');
-    setPreviewSubtitle(`Previewing ${orderedPages.length} selected pages`);
-    previewMutation.mutate(orderedPages);
-  };
-
-  const isPreviewing = previewMutation.isPending;
-
   const previewHistoryItemMutation = useMutation({
     mutationFn: async (record: ExtractionRecord) => {
       const blob = await pdfService.downloadHistoryItem(record._id);
@@ -552,7 +523,7 @@ export default function PDFCraft() {
 
             {/* Full Width Drop Zone Area */}
             <div 
-              onClick={() => !isUploading && !isProcessing && !isPreviewing && fileInputRef.current?.click()}
+              onClick={() => !isUploading && !isProcessing  && fileInputRef.current?.click()}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
@@ -856,10 +827,10 @@ export default function PDFCraft() {
       {/* 4. Center-Anchored Floating Navigation Bar */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[85%] max-w-sm bg-[#111a22]/90 backdrop-blur-md border border-[#1f2e3d] rounded-2xl p-2 flex justify-around items-center shadow-2xl z-50">
         <button 
-          onClick={() => !isUploading && !isProcessing && !isPreviewing && fileInputRef.current?.click()}
+          onClick={() => !isUploading && !isProcessing &&  fileInputRef.current?.click()}
           className="p-3 rounded-xl bg-[#17222b]/50 text-gray-400 hover:text-white hover:bg-[#17222b] transition-all cursor-pointer"
           title="Upload PDF"
-          disabled={isUploading || isProcessing || isPreviewing}
+          disabled={isUploading || isProcessing}
         >
           {isUploading ? (
             <Loader2 size={20} className="animate-spin text-[#00b4d8]" />
@@ -879,12 +850,12 @@ export default function PDFCraft() {
         <button 
           onClick={handleDownload}
           className={`p-3 rounded-xl transition-all cursor-pointer relative ${
-            selectedPages.length > 0 && !isProcessing && !isPreviewing
+            selectedPages.length > 0 && !isProcessing
               ? 'bg-[#00b4d8] text-black shadow-lg shadow-[#00b4d8]/20 hover:bg-[#0096b4]' 
               : 'text-gray-600 bg-gray-900/20 cursor-not-allowed'
           }`}
           title="Download Extracted PDF"
-          disabled={selectedPages.length === 0 || isProcessing || isPreviewing}
+          disabled={selectedPages.length === 0 || isProcessing}
         >
           {isProcessing ? (
             <Loader2 size={20} className="animate-spin" />
@@ -932,7 +903,7 @@ export default function PDFCraft() {
                 }
                 className="flex flex-col items-center py-6 gap-6"
               >
-                {numPages && Array.from(new Array(numPages), (el, index) => (
+                {numPages && Array.from(new Array(numPages), (_, index) => (
                   <Page
                     key={`page_${index + 1}`}
                     pageNumber={index + 1}
