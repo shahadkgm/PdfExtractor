@@ -24,11 +24,15 @@ export class AuthController implements IauthController {
         return;
       }
       if (errorMessage === 'INVALID_EMAIL_FORMAT') {
-        res.status(StatusCode.BAD_REQUEST).json({ error: 'Invalid email format' });
+        res.status(StatusCode.BAD_REQUEST).json({ error: StatusMessage.INVALID_EMAIL_FORMAT });
         return;
       }
       if (errorMessage === 'WEAK_PASSWORD') {
-        res.status(StatusCode.BAD_REQUEST).json({ error: 'Password must be at least 6 characters' });
+        res.status(StatusCode.BAD_REQUEST).json({ error: StatusMessage.WEAK_PASSWORD });
+        return;
+      }
+      if (errorMessage === 'PASSWORD_TOO_LONG') {
+        res.status(StatusCode.BAD_REQUEST).json({ error: StatusMessage.PASSWORD_TOO_LONG });
         return;
       }
       if (errorMessage === 'USER_ALREADY_EXISTS') {

@@ -23,4 +23,7 @@ export enum StatusMessage {
   AUTH_TOKEN_REQUIRED = 'Authorization token required',
   MALFORMED_AUTH_TOKEN = 'Malformed authorization token',
   INVALID_OR_EXPIRED_TOKEN = 'Invalid or expired authorization token',
+  INVALID_EMAIL_FORMAT = 'Invalid email format',
+  WEAK_PASSWORD = 'Password must be at least 6 characters',
+  PASSWORD_TOO_LONG = 'Password cannot exceed 72 characters',
 }

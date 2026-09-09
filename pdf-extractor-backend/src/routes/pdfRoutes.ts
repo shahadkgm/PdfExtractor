@@ -16,9 +16,9 @@ import { StatusCode } from '../static/statusCode.js';
 
 // Endpoint for PDF upload
 router.post('/upload', authMiddleware, (req: Request, res: Response, next: NextFunction) => {
-  upload.single('file')(req, res, (err: any) => {
+  upload.single('file')(req, res, (err: unknown) => {
     if (err) {
-      if (err.message === 'Only PDF files are allowed!') {
+      if (err instanceof Error && err.message === 'Only PDF files are allowed!') {
         return res.status(StatusCode.BAD_REQUEST).json({ error: err.message });
       }
       return res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ error: 'File upload error' });

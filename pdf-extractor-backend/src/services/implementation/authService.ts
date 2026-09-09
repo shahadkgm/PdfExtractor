@@ -16,14 +16,21 @@ export class AuthService implements IauthService {
       throw new Error('EMAIL_PASSWORD_REQUIRED');
     }
     const lowerEmail = email.toLowerCase().trim();
+    if (!lowerEmail || lowerEmail.length > 254) {
+      throw new Error('INVALID_EMAIL_FORMAT');
+    }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(lowerEmail)) {
       throw new Error('INVALID_EMAIL_FORMAT');
     }
 
-    if (password.length < 6) {
+    if (password.trim().length < 6) {
       throw new Error('WEAK_PASSWORD');
+    }
+
+    if (password.length > 12) {
+      throw new Error('PASSWORD_TOO_LONG');
     }
 
     const existingUser = await this._authRepository.findByEmail(lowerEmail);
